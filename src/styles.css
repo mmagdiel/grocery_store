@@ -1,10 +1,6 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: light --default, dark, cupcake, autumn;
-}
 
-/* Custom theme colors - Colombian warm palette */
-:root {
+@theme {
   --color-primary: #c45c26;
   --color-secondary: #8b4513;
   --color-accent: #ffc107;
@@ -13,6 +9,8 @@
   --color-base-200: #f5f0e8;
   --color-base-300: #e8dfd1;
 }
+
+@plugin "daisyui";
 
 /* Custom fonts - Rustic feel */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap');

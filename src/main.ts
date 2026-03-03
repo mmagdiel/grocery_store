@@ -207,3 +207,188 @@ function renderProducts(productsToRender: Product[] = products): void {
 
 // Initialize the app
 renderProducts();
+
+
+// State management
+let currentCategory = "all";
+let searchQuery = "";
+
+// Filter products based on category and search
+function filterProducts(): Product[] {
+  return products.filter((product) => {
+    const matchesCategory =
+      currentCategory === "all" || product.category === currentCategory;
+    const matchesSearch =
+      searchQuery === "" ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+}
+
+// Update category filter UI
+function updateCategoryButtons(): void {
+  const buttons = document.querySelectorAll("[data-category]");
+  buttons.forEach((button) => {
+    const category = button.getAttribute("data-category");
+    if (category === currentCategory) {
+      button.classList.remove("btn-outline");
+      button.classList.add("btn-primary");
+    } else {
+      button.classList.add("btn-outline");
+      button.classList.remove("btn-primary");
+    }
+  });
+}
+
+// Handle category filter click
+function handleCategoryClick(event: Event): void {
+  const target = event.target as HTMLElement;
+  const button = target.closest("[data-category]") as HTMLElement;
+  if (!button) return;
+
+  currentCategory = button.getAttribute("data-category") || "all";
+  updateCategoryButtons();
+  renderProducts(filterProducts());
+}
+
+// Handle search input
+function handleSearch(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  searchQuery = input.value;
+  renderProducts(filterProducts());
+}
+
+// Setup event listeners
+function setupEventListeners(): void {
+  // Category filter
+  const categoryFilter = document.getElementById("categoryFilter");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("click", handleCategoryClick);
+  }
+
+  // Search input
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", handleSearch);
+  }
+
+  // Product card clicks
+  const productGrid = document.getElementById("productGrid");
+  if (productGrid) {
+    productGrid.addEventListener("click", handleProductClick);
+  }
+}
+
+// Initialize event listeners
+setupEventListeners();
+
+
+// Show product detail modal
+function showProductDetail(productId: number): void {
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
+
+  const modal = document.getElementById("productModal") as HTMLDialogElement;
+  const productDetail = document.getElementById("productDetail");
+  if (!modal || !productDetail) return;
+
+  productDetail.innerHTML = `
+    <div class="flex flex-col md:flex-row gap-6">
+      <div class="md:w-1/2">
+        <img src="${product.image}" alt="${product.name}" class="w-full rounded-lg shadow-lg" />
+      </div>
+      <div class="md:w-1/2">
+        <h2 class="text-3xl font-bold mb-2">${product.name}</h2>
+        <div class="badge badge-primary mb-4">${getCategoryName(product.category)}</div>
+        <p class="text-base-content/70 mb-4">${product.description}</p>
+        
+        <div class="bg-base-200 p-4 rounded-lg mb-4">
+          <div class="flex justify-between items-center">
+            <span class="text-lg">Precio:</span>
+            <span class="text-3xl font-bold text-primary">${formatPrice(product.price)}</span>
+          </div>
+          <div class="text-sm text-base-content/60 text-right">por ${product.unit}</div>
+        </div>
+
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text">Cantidad</span>
+          </label>
+          <div class="flex gap-2">
+            <button class="btn btn-circle btn-sm" onclick="decrementQuantity()">-</button>
+            <input 
+              type="number" 
+              id="quantityInput" 
+              value="1" 
+              min="1" 
+              max="100"
+              class="input input-bordered w-20 text-center weight-input"
+            />
+            <button class="btn btn-circle btn-sm" onclick="incrementQuantity()">+</button>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" onclick="addToCartFromDetail(${product.id})">
+            Agregar al Carrito
+          </button>
+          <button class="btn btn-outline" onclick="document.getElementById('productModal').close()">
+            Cerrar
+          </button>
+        </div>
+
+        ${product.inStock ? 
+          '<div class="alert alert-success mt-4"><span>✓ Disponible en stock</span></div>' : 
+          '<div class="alert alert-warning mt-4"><span>⚠ Agotado temporalmente</span></div>'
+        }
+      </div>
+    </div>
+  `;
+
+  modal.showModal();
+}
+
+// Get category display name
+function getCategoryName(category: string): string {
+  const categoryNames: Record<string, string> = {
+    frutas: "🍎 Frutas",
+    verduras: "🥬 Verduras",
+    carnes: "🥩 Carnes",
+    lacteos: "🥛 Lácteos",
+    panaderia: "🥖 Panadería",
+    despensa: "🛒 Despensa",
+  };
+  return categoryNames[category] || category;
+}
+
+// Quantity controls for product detail
+(window as any).incrementQuantity = function() {
+  const input = document.getElementById("quantityInput") as HTMLInputElement;
+  if (input) {
+    input.value = String(Math.min(100, parseInt(input.value) + 1));
+  }
+};
+
+(window as any).decrementQuantity = function() {
+  const input = document.getElementById("quantityInput") as HTMLInputElement;
+  if (input) {
+    input.value = String(Math.max(1, parseInt(input.value) - 1));
+  }
+};
+
+// Handle product card click
+function handleProductClick(event: Event): void {
+  const target = event.target as HTMLElement;
+  const card = target.closest("[data-product-id]") as HTMLElement;
+  
+  // Don't open modal if clicking the "Agregar" button
+  if (target.classList.contains("add-to-cart") || target.closest(".add-to-cart")) {
+    return;
+  }
+  
+  if (card) {
+    const productId = parseInt(card.getAttribute("data-product-id") || "0");
+    showProductDetail(productId);
+  }
+}
