@@ -28,11 +28,13 @@ export function getProductImageUrl(record: Products): string {
 
 export function mapPbProductToUiProduct(record: Products): UiProduct {
   const expandedCategorySlug = record.expand?.category_id?.slug;
+  const expandedCategoryName = record.expand?.category_id?.name;
 
   return {
     id: record.id,
     name: record.name,
     category: expandedCategorySlug || record.category_id,
+    categoryName: expandedCategoryName,
     price: record.price,
     unit: "unidad",
     image: getProductImageUrl(record),

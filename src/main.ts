@@ -343,7 +343,7 @@ function showProductDetail(productId: string): void {
       </div>
       <div class="md:w-1/2">
         <h2 class="text-3xl font-bold mb-2">${product.name}</h2>
-        <div class="badge badge-primary mb-4">${getCategoryName(product.category)}</div>
+        <div class="badge badge-primary mb-4">${getCategoryName(product)}</div>
         <p class="text-base-content/70 mb-4">${product.description}</p>
         
         <div class="bg-base-200 p-4 rounded-lg mb-4">
@@ -391,7 +391,11 @@ function showProductDetail(productId: string): void {
 }
 
 // Get category display name
-function getCategoryName(category: string): string {
+function getCategoryName(product: Product): string {
+  if (product.categoryName && product.categoryName.trim().length > 0) {
+    return product.categoryName;
+  }
+
   const categoryNames: Record<string, string> = {
     frutas: "🍎 Frutas",
     verduras: "🥬 Verduras",
@@ -400,7 +404,7 @@ function getCategoryName(category: string): string {
     panaderia: "🥖 Panadería",
     despensa: "🛒 Despensa",
   };
-  return categoryNames[category] || category;
+  return categoryNames[product.category] || product.category;
 }
 
 // Quantity controls for product detail
