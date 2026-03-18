@@ -1,5 +1,6 @@
 import "./styles.css";
-import { products, type Product } from "./products";
+import { fetchProducts } from "./pocketbaseClient";
+import type { Product } from "./uiProduct";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -177,10 +178,12 @@ function formatPrice(price: number): string {
 
 // Render product card
 function renderProductCard(product: Product): string {
+  const imageUrl = product.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80";
+  console.log(product.image)
   return `
     <div class="card bg-base-100 shadow-xl product-card cursor-pointer" data-product-id="${product.id}">
       <figure class="h-48 overflow-hidden">
-        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover" />
+        <img src="${imageUrl}" alt="${product.name}" class="w-full h-full object-cover" />
       </figure>
       <div class="card-body p-4">
         <h3 class="card-title text-lg">${product.name}</h3>
@@ -200,7 +203,7 @@ function renderProductCard(product: Product): string {
 }
 
 // Render all products
-function renderProducts(productsToRender: Product[] = products): void {
+function renderProducts(productsToRender: Product[]): void {
   const productGrid = document.getElementById("productGrid");
   if (!productGrid) return;
 
@@ -216,17 +219,40 @@ function renderProducts(productsToRender: Product[] = products): void {
   productGrid.innerHTML = productsToRender.map(renderProductCard).join("");
 }
 
-// Initialize the app
-renderProducts();
+function renderLoading(): void {
+  const productGrid = document.getElementById("productGrid");
+  if (!productGrid) return;
+
+  productGrid.innerHTML = `
+    <div class="col-span-full text-center py-12">
+      <span class="loading loading-spinner loading-lg"></span>
+      <p class="mt-4 text-base-content/60">Cargando productos...</p>
+    </div>
+  `;
+}
+
+function renderError(message: string): void {
+  const productGrid = document.getElementById("productGrid");
+  if (!productGrid) return;
+
+  productGrid.innerHTML = `
+    <div class="col-span-full text-center py-12">
+      <div class="alert alert-error inline-flex">
+        <span>${message}</span>
+      </div>
+    </div>
+  `;
+}
 
 
 // State management
 let currentCategory = "all";
 let searchQuery = "";
+let allProducts: Product[] = [];
 
 // Filter products based on category and search
 function filterProducts(): Product[] {
-  return products.filter((product) => {
+  return allProducts.filter((product) => {
     const matchesCategory =
       currentCategory === "all" || product.category === currentCategory;
     const matchesSearch =
@@ -302,8 +328,8 @@ setupEventListeners();
 
 
 // Show product detail modal
-function showProductDetail(productId: number): void {
-  const product = products.find((p) => p.id === productId);
+function showProductDetail(productId: string): void {
+  const product = allProducts.find((p) => p.id === productId);
   if (!product) return;
 
   const modal = document.getElementById("productModal") as HTMLDialogElement;
@@ -313,7 +339,7 @@ function showProductDetail(productId: number): void {
   productDetail.innerHTML = `
     <div class="flex flex-col md:flex-row gap-6">
       <div class="md:w-1/2">
-        <img src="${product.image}" alt="${product.name}" class="w-full rounded-lg shadow-lg" />
+        <img src="${product.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80"}" alt="${product.name}" class="w-full rounded-lg shadow-lg" />
       </div>
       <div class="md:w-1/2">
         <h2 class="text-3xl font-bold mb-2">${product.name}</h2>
@@ -352,7 +378,7 @@ function showProductDetail(productId: number): void {
         </div>
 
         <div class="flex gap-2">
-          <button class="btn btn-primary flex-1" onclick="addToCartFromDetail(${product.id})">
+          <button class="btn btn-primary flex-1" onclick="addToCartFromDetail('${product.id}')">
             Agregar al Carrito
           </button>
         </div>
@@ -403,7 +429,21 @@ function handleProductClick(event: Event): void {
   }
   
   if (card) {
-    const productId = parseInt(card.getAttribute("data-product-id") || "0");
+    const productId = card.getAttribute("data-product-id") || "";
+    if (!productId) return;
     showProductDetail(productId);
   }
 }
+
+async function initProducts(): Promise<void> {
+  renderLoading();
+
+  try {
+    allProducts = await fetchProducts();
+    renderProducts(filterProducts());
+  } catch {
+    renderError("No se pudieron cargar los productos. Verifica que PocketBase esté corriendo.");
+  }
+}
+
+initProducts();

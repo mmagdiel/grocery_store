@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/products.ts","./src/vite-env.d.ts"],"version":"5.6.3"}
+{"root":["./src/main.ts","./src/pocketbaseClient.ts","./src/pocketbaseTypes.ts","./src/products.ts","./src/uiProduct.ts","./src/vite-env.d.ts"],"version":"5.6.3"}
