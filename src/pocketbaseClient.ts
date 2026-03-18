@@ -23,7 +23,7 @@ function getFirstFileName(value: unknown): string | null {
 export function getProductImageUrl(record: Products): string {
   const fileName = getFirstFileName((record as any).images);
   if (!fileName) return "";
-  return fileName;
+  return pb.files.getURL(record, fileName);
 }
 
 export function mapPbProductToUiProduct(record: Products): UiProduct {
